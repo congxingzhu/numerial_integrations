@@ -1,0 +1,235 @@
+---
+title: "Numerical Integration Methods"
+author: "Congxing Zhu"
+date: "5/28/2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,tidy = FALSE,highlight = TRUE,message = FALSE,warning=FALSE)
+```
+
+
+
+###1. Midpoint rule.
+For midpoint rule, we will divide the interval ${[a,b]}$ into $n$ subintervals of equal width, such that $\Delta{x}=(b-a)/n$, then each of the intervals can be denoted as follows, $[x_0,x_1],[x_1,x_2],...,[x_{n-1},x_n]$. For each interval, let ${x_i}^*$ be the midpoint of the interval.  We then sketch in rectangles for each subinterval with a height of  $f({x_i}^*)$. Here is a graph showing the set up using n=6.
+
+![](/Users/congxingzhu/Desktop/Summer Presentations/Numerical Intergrations/Picture1.jpg)
+
+
+We can easily find the area for each of these rectangles and so for a general $n$ we get that,
+$$\int_{a}^{b}f(x)dx\approx\Delta{x}f({{x_1}^*})+\Delta{x}f({{x_2}^*})+\ldots+\Delta{x}f({{x_n}^*})$$
+
+Upon factoring out a delta{x}, we can get the general midpoint rule:
+$$\int_{a}^{b}f(x)dx\approx\Delta{x}(f({{x_1}^*})+f({{x_2}^*})+\ldots+f({{x_n}^*}))$$
+
+```{r}
+library(ggplot2)
+ggplot(data.frame(x=1:5), aes(x=x)) + 
+  stat_function(fun=dgamma, args=list(shape=4,scale=1), color="red") +
+  geom_rect(data=data.frame(x=seq(1,4.75,by=0.5)),inherit.aes = F,
+            aes(xmin=seq(1,4.75,by=0.5),xmax=seq(1.5,5.25,by=0.5),
+                ymin=0,ymax=dgamma(seq(1.25,5,by=0.5),4,1)),
+            color="black",fill=NA)+ylim(0,0.25) +ylab("density")+
+  ggtitle("Gamma: shape=4, scale=1")+ 
+  theme(plot.title = element_text(hjust = 0.5))
+true <- integrate(dgamma,shape=4,scale=1,1,5)$value
+mestimate <- 0.5*sum(dgamma(seq(1.25,5,by=0.5),4,1))
+options("scipen"=100, "digits"=4)
+mestimate-true
+```
+
+###2. Trapezoid rule.
+The trapezoidal rule works by approximating the region under the graph of the function $f(x)$ as a trapezoid and calculating its area, it follows that:
+
+![](/Users/congxingzhu/Desktop/Summer Presentations/Numerical Intergrations/Picture2.jpg)
+
+$$\int_{a}^{b}f(x)dx\approx\frac{\Delta{x}}{2}(f({{x_1}})+2f({{x_2}})+2f({{x_3}})+2f({{x_4}})\ldots+2f({{x_{n-1}}})+f({{x_n}}))$$, where $\Delta{x}=\frac{b-a}{n}$ and $x_i=a+i\Delta{x}$.
+The integral can be better approximated by partitioning the integration interval, applying the trapezoidal rule to each subinterval, and summing the results.  Let $x_k$ be a partition of $[a,b]$ such that $a=x_0< x_1<x_2<\ldots<x_{N-1}<x_N=b$ and $\Delta{x_k}=x_k-x_{k-1}$, then 
+$$\int_{a}^{b}f(x)dx\approx\sum_{k=1}^{N}\frac{f({{x_{k-1}}})+f({{x_k}})}{2}\Delta{x}$$.
+The approximation becomes more accurate as the resolution of the partition increases.
+
+```{r}
+library(ggplot2)
+ggplot(data.frame(x=1:5), aes(x=x)) + 
+  stat_function(fun=dgamma, args=list(shape=4,scale=1), color="red")+
+  geom_polygon(data=data.frame(x=c(1,1,1.5,1.5,
+                                   1.5,1.5,2,2,
+                                   2,2,2.5,2.5,
+                                   2.5,2.5,3,3,
+                                   3,3,3.5,3.5,
+                                   3.5,3.5,4,4,
+                                   4,4,4.5,4.5,
+                                   4.5,4.5,5,5),
+                        y=c(0,dgamma(1,4,1),dgamma(1.5,4,1),0,
+                            0,dgamma(1.5,4,1),dgamma(2,4,1),0,
+                            0,dgamma(2,4,1),dgamma(2.5,4,1),0,
+                            0,dgamma(2.5,4,1),dgamma(3,4,1),0,
+                            0,dgamma(3,4,1),dgamma(3.5,4,1),0,
+                            0,dgamma(3.5,4,1),dgamma(4,4,1),0,
+                            0,dgamma(4,4,1),dgamma(4.5,4,1),0,
+                            0,dgamma(4.5,4,1),dgamma(5,4,1),0)),
+               aes(x=x,y=y),
+               color="black",fill=NA)+ylim(0,0.25) +ylab("density")+
+  ggtitle("Gamma: shape=4, scale=1") + 
+  theme(plot.title = element_text(hjust = 0.5))
+true <- integrate(dgamma,shape=4,scale=1,1,5)$value
+Testimate <- (0.5/2)*(dgamma(1,4,1)+2*dgamma(1.5,4,1)+
+                      2*dgamma(2,4,1)+2*dgamma(2.5,4,1)+2*dgamma(3,4,1)+
+                      2*dgamma(3.5,4,1)+2*dgamma(4,4,1)+2*dgamma(4.5,4,1)+dgamma(5,4,1))
+options("scipen"=100, "digits"=4)
+Testimate-true
+```
+
+###3. Simpson's rule.
+Simpson’s rule is a numerical method that approximates the value of a definite integral by using quadratic polynomials. It can be derived by integrating a third-order Lagrange interpolating polynomial fit to the function at three equally spaced points. 
+
+![](/Users/congxingzhu/Desktop/Summer Presentations/Numerical Intergrations/Picture3.jpg)
+
+Specifically, it is the following approximation for n equally spaced subdivisions where $n$ is even: 
+$$\int_{a}^{b}f(x)dx\approx\frac{\Delta{x}}{3}(f({{x_0}})+4f({{x_1}})+2f({{x_2}})+4f({{x_3}})+2f({{x_4}})\ldots+4f({{x_{n-1}}})+f({{x_n}}))$$,
+where $\Delta{x}=\frac{b-a}{n}$ and $x_i=a+i\Delta{x}$.
+
+[Proof](https://www.youtube.com/watch?v=7MoRzPObRf0)
+
+
+```{r}
+true <- integrate(dgamma,shape=4,scale=1,1,5)$value
+Sestimate <- (0.5/3)*(dgamma(1,4,1)+4*dgamma(1.5,4,1)+
+                      2*dgamma(2,4,1)+4*dgamma(2.5,4,1)+2*dgamma(3,4,1)+
+                      4*dgamma(3.5,4,1)+2*dgamma(4,4,1)+4*dgamma(4.5,4,1)+dgamma(5,4,1))
+options("scipen"=100, "digits"=4)
+Sestimate-true
+```
+
+###4. Gauss quadrature.
+In numerical analysis, a quadrature rule is an approximation of the definite integral of a function, usually stated as a weighted sum of function values at specified points within the domain of integration. An n-point Gaussian quadrature rule, named after Carl Friedrich Gauss, is a quadrature rule constructed to yield an exact result for polynomials of degree 2n-1 or less by a suitable choice of the points $x_i$ and weights $w_i$ for $i=1,...,n$. The domain of integration for such a rule is conventionally taken as [−1,1], so the rule is stated as
+$$\int_{-1}^{1}f(x)dx\approx\sum_{i=1}^{n}{w_i}f(x_i)$$.
+Some low-order rules for solving the integration problem are listed below (over interval [−1,1], see the section below for other intervals).
+
+![](/Users/congxingzhu/Desktop/Summer Presentations/Numerical Intergrations/Picture4.jpg)
+
+An integral over [a,b] must be changed into an integral over [−1,1] before applying the Gaussian quadrature rule. This change of interval can be done in the following way:
+
+$$\int_{a}^{b}f(x)dx=\frac{b-a}{2}\int_{-1}^{1}f(\frac{b-a}{2}+\frac{a+b}{2})dx$$.
+Applying the Gaussian quadrature rule then results in the following approximation:
+$$\int_{a}^{b}f(x)dx\approx\frac{b-a}{2}\sum_{i=1}^{n}w_if(\frac{b-a}{2}x_i+\frac{a+b}{2})$$
+
+
+[Derivation](http://fourier.eng.hmc.edu/e176/lectures/ch6/node11.html)
+
+[Details](https://pomax.github.io/bezierinfo/legendre-gauss.html)
+
+```{r}
+true <- integrate(dgamma,shape=4,scale=1,1,5)$value
+Gestimate <- 2*((8/9)*dgamma(2*0+3,4,1)+
+                (5/9)*dgamma(2*sqrt(3/5)+3,4,1)+ 
+                (5/9)*dgamma(2*-sqrt(3/5)+3,4,1))
+Gestimate-true
+```
+
+
+###5. Monte carlo integration.
+Monte Carlo integration is a technique for numerical integration using random numbers. It is a particular Monte Carlo method that numerically computes a definite integral. While other algorithms usually evaluate the integrand at a regular grid, Monte Carlo randomly choose points at which the integrand is evaluated.This method is particularly useful for higher-dimensional integrals.
+
+![](/Users/congxingzhu/Desktop/Summer Presentations/Numerical Intergrations/Picture5.jpg)
+
+An illustration of Monte Carlo integration, In this example, the domain $D$ is the inner circle and the domain $E$ is the square. Because the square's area can be easily calculated, the area of the circle ($\pi\cdot1^2$) can be estimated by the ratio (0.8) of the points inside the circle (40) to the total number of points (50), yielding an approximation for the circle's area of $4\cdot0.8=3.2\approx\pi\cdot1^2$.
+
+```{r}
+set.seed(1990)
+library(ggplot2)
+ggplot(data.frame(x=1:5), aes(x=x)) + 
+  stat_function(fun=dgamma, args=list(shape=4,scale=1), color="red")+
+  geom_point(data=data.frame(x=runif(100,1,5),y=runif(100,0,0.25)),
+             inherit.aes=F,aes(x=x,y=y))+
+  ylim(0,0.25) +ylab("density")+
+  ggtitle("Gamma: shape=4, scale=1") + 
+  theme(plot.title = element_text(hjust = 0.5))
+true <- integrate(dgamma,shape=4,scale=1,1,5)$value
+N <- 10^6
+U <- sum(dgamma(runif(N,1,5),4,1)>runif(N,0,0.25))
+Monestimate <- U/N*(5-1)*0.25
+Monestimate-true
+```
+
+
+###Results:
+```{r}
+Midpoint <- c(0.7179,0.716,0.001883)
+Trapezoid <- c(0.7122,0.716,-0.003748)
+Simpson <- c(0.7161,0.716,0.00009854)
+Gauss <- c(0.7152,0.716,-0.0007636)
+Monte <- c(0.7157,0.716,-0.0002829)
+results <- data.frame(Midpoint,Trapezoid,Simpson,Gauss,Monte)
+row.names(results) <- c("estimated","true","difference")
+results
+```
+
+
+###Notes:
+Quadrature rules to solve integrals are simple indeed, but as the dimension of the integral increases, they become more and more expensive to use. In fact they suffer from the curse of dimensionality, where the convergence rate becomes exponentially worse as the dimension of the integral increases.
+
+The principle of the Monte Carlo integration can easily be extended to higher dimension and the convergence rate of the method is independent of the number of dimensions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
